@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>nano-writer</title>
+	<style type="text/css">
+		* { font: 12pt serif; margin: 0px; padding: 0px; box-sizing: border-box; }
+		*:focus { outline: none; }
+		::-webkit-scrollbar { display: none; }
+		html { height: 100%; overflow-y: hidden; }
+		body { min-height: 100%; }
+		div#login { height: 100%; width: 100%; position: absolute; background-color: white; }
+		input#login-name { text-align: center; width: 100%; top: 40%; position: absolute; border: none; border-bottom: 1px solid black;}
+		.column.left { float: left; width: 10%; height: 100vh; }
+		.column.center { display: inline-block; width: 35%; height: 100vh; }
+		.column.right { float: right; width: 55%; height: 100vh; }
+		.column.right ul { height: 100%; width: 100%; display: table; table-layout: fixed; }
+		.column.right ul li { width: 100%; display: table-row; }
+		textarea { font: 12pt serif; resize: none; border: none; }
+		textarea#mine { background-color: green; width: 100%; height: 100%; }
+		div.other { background-color: red; width: 100%; }
+		#other-picker { background-color: gray; }
+		#other-picker-header { background-color: orange; }
+	</style>
+	<script type="text/javascript" src="socket.io/socket.io.js"></script>
+	<script type="text/javascript">
+		var socket = io(),
+			otherWriterCount = 0;
+		window.onload = function() {
+			var usernameInput = document.getElementById('login-name'),
+				otherDiv = document.getElementById('other-picker'),
+				addOther = function(username) {
+					var userDiv = document.createElement('div');
+					userDiv.innerHTML = username;
+					userDiv.classList.add('other');
+					otherDiv.appendChild(userDiv);
+				},
+				mine = document.getElementById('mine'),
+				getCursorPosition = function() { return 1; }
+
+			/*
+			Get user name and send to werver
+			*/
+			usernameInput.addEventListener('keydown', function(event) {
+				if (event.keyCode === 13) {
+					socket.emit('add user', event.target.value);
+				}
+			});
+
+			/*
+			Receive list of users and hide login screen on successful login
+			*/
+			socket.on('login', function(message) {
+				document.getElementById('login').style.visibility = 'hidden'
+				message.users.forEach(addOther);
+			});
+
+			/*
+			Display reason on login failure
+			*/
+			socket.on('login failed', function(message) {
+				usernameInput.value = '';
+				usernameInput.placeholder = message.reason;
+			});
+
+			/*
+			Add new users as they join
+			*/
+			socket.on('new user', function(message) {
+				addOther(message.user);
+			});
+
+			/*
+			Send events from user's text
+			*/
+
+			// Keys
+			mine.addEventListener('keypress', function(event) {
+				character = String.fromCharCode(event.keyCode);
+				socket.emit('character', character);
+				console.log(character);
+			});
+
+			// backspace or delete or arrow key or tab
+			mine.addEventListener('keydown', function(event) {
+				console.log('keydown');
+				switch (event.keyCode) {
+					case 8:
+						socket.emit('key', 'backspace');
+						break;
+					case 46:
+						socket.emit('key', 'delete');
+						break;
+					case 9:
+						socket.emit('key', 'tab');
+						event.preventDefault();
+						(function() {
+							var start = event.target.selectionStart,
+								end = event.target.selectionEnd;
+							event.target.value = event.target.value.slice(0, start) + '\t' + event.target.value.slice(end);
+							event.target.selectionStart = event.target.selectionEnd = start + 1;
+						})();
+					case 37:
+					case 38:
+					case 39:
+					case 40:
+						socket.emit('key', 'arrow');
+						socket.emit('cursor', getCursorPosition());
+						break;
+				}
+			});
+
+			// Click to move cursor
+			mine.addEventListener('mouseup', function() {
+				socket.emit('cursor', getCursorPosition());
+			});
+
+			/*
+			Add other writers
+			*/
+
+			/*
+			Receive events from other writers
+			*/
+		};
+	</script>
+</head>
+<body height>
+	<div id="login">
+		<input id="login-name" type="text" placeholder="Type your name here. Press enter to submit."/>
+	</div>
+	<div class="column left" id="other-picker">
+		<div id="other-picker-header">writers</div>
+	</div>
+	<div class="column center">
+		<textarea id="mine"></textarea>
+	</div>
+	<div class="column right">
+		<ul>
+			<li>other user 1</li>
+			<li>other user 2</li>
+			<li>other user 3</li>
+		</ul>
+	</div>
+</body>
+</html>
