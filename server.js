@@ -1,5 +1,6 @@
 var http = require('http');
 var fs = require('q-io/fs');
+var pathJoin = require('path').join;
 var socketIo = require('socket.io');
 
 var server_port = process.env.OPENSHIFT_NODEJS_PORT || 8080
@@ -15,7 +16,7 @@ var users = {
 };
 
 var server = http.createServer(function (request, response) {
-	fs.read(home_directory + '/index.html').then(function(file) {
+	fs.read(pathJoin(home_directory, 'index.html')).then(function(file) {
 		response.writeHead(200);
 		return response.end(file);
 	}).catch(function(error) {
