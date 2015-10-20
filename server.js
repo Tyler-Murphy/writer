@@ -17,10 +17,10 @@ var users = {
 
 var server = http.createServer(function (request, response) {
 	fs.read(pathJoin(home_directory, 'index.html')).then(function(file) {
-		response.writeHead(200);
+		response.writeHead(200, {'Content-Type': 'text/html'});
 		return response.end(file);
 	}).catch(function(error) {
-		response.writeHead(500);
+		response.writeHead(500, {'Content-Type': 'text/html'});
 		return response.end(error.stack);
 	});
 });
