@@ -7,8 +7,6 @@ var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1'
 var home_directory = process.env.OPENSHIFT_HOMEDIR || __dirname;
 
 var users = {
-	user1: { text: 'Once upon a time there was a bunny.' },
-	user2: { text: 'Once upon a time Mikaela was a dummy.' }
 /*
 	<username>: {
 		text: 'Once upon a time'
@@ -50,8 +48,8 @@ io.on('connection', function(socket) {
 
 	socket.on('character', function(character) {
 		console.log(character);
-		socket.broadcast.emit('other user character', {
-			user: socket.username,
+		socket.broadcast.emit('got other character', {
+			username: socket.username,
 			character: character
 		});
 		users[socket.username].text += character;

@@ -102,8 +102,12 @@
 			});
 
 			/*
-			Send events from user's text
+			Get other users' characters
 			*/
+			socket.on('got other character', function(message) {
+				var textBox = document.getElementById(message.username);
+				if (textBox) textBox.innerHTML += message.character;
+			});
 
 			// Keys
 			mine.addEventListener('keypress', function(event) {
