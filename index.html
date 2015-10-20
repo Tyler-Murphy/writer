@@ -17,8 +17,9 @@
 		.column.right ul li { width: 100%; display: table-row; }
 		textarea { font: 12pt serif; resize: none; border: none; }
 		textarea#mine { background-color: green; width: 100%; height: 100%; }
-		div.other { background-color: red; width: 100%; }
-		#other-picker { background-color: gray; }
+		li.other-text { border-bottom: 1px solid black; }
+		div.other { background-color: red; width: 100%; border-bottom: 1px solid black; cursor: pointer; }
+		#other-picker { background-color: gray; overflow-y: auto; }
 		#other-picker-header { background-color: orange; }
 	</style>
 	<script type="text/javascript" src="socket.io/socket.io.js"></script>
@@ -28,14 +29,38 @@
 		window.onload = function() {
 			var usernameInput = document.getElementById('login-name'),
 				otherDiv = document.getElementById('other-picker'),
+				otherTextList = document.getElementById('other-text'),
 				addOther = function(username) {
 					var userDiv = document.createElement('div');
 					userDiv.innerHTML = username;
 					userDiv.classList.add('other');
+					userDiv.onclick = followUser(userDiv, username);
 					otherDiv.appendChild(userDiv);
+				},
+				followUser = function(userDiv, username) {
+					return function() {
+						var otherUserTextLi = document.createElement('li');
+						otherUserTextLi.classList.add('other-text')
+						otherUserTextLi.id = username;
+						otherUserTextLi.innerHTML = 'Fetching content for ' + username;
+						otherTextList.appendChild(otherUserTextLi);
+						userDiv.onclick = unfollowUser(userDiv, username);
+						socket.emit('get other text', username);
+					};
+				},
+				unfollowUser = function(userDiv, username) {
+					return function() {
+						userDiv.onclick = followUser(userDiv, username);
+						otherTextList.removeChild(document.getElementById(username));
+					};
 				},
 				mine = document.getElementById('mine'),
 				getCursorPosition = function() { return 1; }
+
+			/*
+			Make username input active
+			*/
+			usernameInput.focus();
 
 			/*
 			Get user name and send to werver
@@ -67,6 +92,13 @@
 			*/
 			socket.on('new user', function(message) {
 				addOther(message.user);
+			});
+
+			/*
+			Retrieve other users' text
+			*/
+			socket.on('got other text', function(message) {
+				document.getElementById(message.username).innerHTML = message.text;
 			});
 
 			/*
@@ -126,7 +158,7 @@
 </head>
 <body height>
 	<div id="login">
-		<input id="login-name" type="text" placeholder="Type your name here. Press enter to submit."/>
+		<input id="login-name" type="text" placeholder="Type your name here. Press enter to submit." maxlength="20"/>
 	</div>
 	<div class="column left" id="other-picker">
 		<div id="other-picker-header">writers</div>
@@ -135,11 +167,7 @@
 		<textarea id="mine"></textarea>
 	</div>
 	<div class="column right">
-		<ul>
-			<li>other user 1</li>
-			<li>other user 2</li>
-			<li>other user 3</li>
-		</ul>
+		<ul id="other-text"></ul>
 	</div>
 </body>
 </html>
