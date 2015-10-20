@@ -34,6 +34,7 @@
 					var userDiv = document.createElement('div');
 					userDiv.innerHTML = username;
 					userDiv.classList.add('other');
+					userDiv.setAttribute('username', username);
 					userDiv.onclick = followUser(userDiv, username);
 					otherDiv.appendChild(userDiv);
 				},
@@ -53,6 +54,11 @@
 						userDiv.onclick = followUser(userDiv, username);
 						otherTextList.removeChild(document.getElementById(username));
 					};
+				},
+				removeOther = function(username) {
+					var otherText = document.getElementById(username);
+					otherDiv.removeChild(document.querySelector('div[username="' + username + '"]'));
+					if (otherText) otherTextList.removeChild(otherText);
 				},
 				mine = document.getElementById('mine'),
 				getCursorPosition = function() { return 1; }
@@ -92,6 +98,13 @@
 			*/
 			socket.on('new user', function(message) {
 				addOther(message.user);
+			});
+
+			/*
+			Remove users as they leave
+			*/
+			socket.on('remove user', function(message) {
+				removeOther(message.username);
 			});
 
 			/*

@@ -56,8 +56,12 @@ io.on('connection', function(socket) {
 		users[socket.username].text += character;
 	});
 
-
 	socket.on('key', function(keyString) { console.log(keyString); });
+
+	socket.on('disconnect', function() {
+		delete users[socket.username];
+		socket.broadcast.emit('remove user', { username: socket.username });
+	});
 });
 
 server.listen(server_port, server_ip_address, function() {
